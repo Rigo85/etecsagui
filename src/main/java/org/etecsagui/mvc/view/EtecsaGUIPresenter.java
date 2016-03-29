@@ -33,16 +33,21 @@ import java.util.Map;
 public class EtecsaGUIPresenter {
     EtecsaGUIView etecsaGUIView;
     SearchService searchService;
+    ProgressIndicator progressIndicator;
 
     public EtecsaGUIPresenter(EtecsaGUIView etecsaGUIView) {
         this.etecsaGUIView = etecsaGUIView;
 
         searchService = new SearchService();
 
+        progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(200, 200);
+
         this.etecsaGUIView.searchButton.setOnAction(e -> searchAction());
 
         this.etecsaGUIView.searchButton.disableProperty().bind(searchService.stateProperty().isEqualTo(Worker.State.RUNNING));
         this.etecsaGUIView.searchTextField.disableProperty().bind(searchService.stateProperty().isEqualTo(Worker.State.RUNNING));
+        progressIndicator.visibleProperty().bind(searchService.stateProperty().isEqualTo(Worker.State.RUNNING));
 
         this.etecsaGUIView.searchTextField.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
@@ -144,6 +149,9 @@ public class EtecsaGUIPresenter {
             alert.setTitle("Confirmación");
             alert.showAndWait();
         } else {
+            cleanCenterPanel();
+
+            this.etecsaGUIView.centerPanel.getChildren().addAll(progressIndicator);
 
             searchService.setDb(etecsaGUIView.db);
             searchService.setPartiaQuery(etecsaGUIView.searchTextField.getText());
@@ -157,9 +165,13 @@ public class EtecsaGUIPresenter {
         }
     }
 
-    private void createTables(List<List<Map<String, String>>> objsList) {
+    private void cleanCenterPanel() {
         if (etecsaGUIView.centerPanel.getChildren().size() > 1)
             etecsaGUIView.centerPanel.getChildren().remove(1, etecsaGUIView.centerPanel.getChildren().size());
+    }
+
+    private void createTables(List<List<Map<String, String>>> objsList) {
+        cleanCenterPanel();
         objsList.stream().forEach(list -> {
             TableView tableView = createTable(list);
 
